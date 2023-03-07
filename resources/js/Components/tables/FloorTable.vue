@@ -5,9 +5,10 @@
         <div style="width: 65%;display: flex;justify-content: space-between">
           <VSelect
             label="row"
-            v-model="perPage"
-            :items="pagi.per_page"
+            v-model="pageSize"
+            :items="pageSizes"
             variant="solo"
+            @change="handlePageSizeChange"
             style="width: 18%;"
           />
           <VSpacer />
@@ -342,38 +343,41 @@
       <caption >List Of Data( {{this.count}} )</caption>
     </VTable>
     <div style="float: right">
-      <VPagination
-        v-model="pagi"
-        :length="2"
-        :total-visible="10"
-        :data="count"
-        :per-page="perPage"
 
-      />
+       <VPagination
+         v-if="pageInfo"
+         v-model="pageInfo.current_page"
+         :length="pageInfo.total"
+         :page-size="pageInfo.per_page"
+         total-visible="7"
+         :size="55"
+         @on-change="getAllPaginate"
+       />
+
       
     </div>
-    <table>
-      <thead>
-      <tr>
-      <th>current_page </th>
-      <th> per_page</th>
-      <th> last_page </th>
-      <th> total </th>
-      </tr>
-      </thead>
-      <tbody>
-      <tr
-      v-for="pag in pagi"
-      style="text-align: left"
-    >
+<!--    <table>-->
+<!--      <thead>-->
+<!--      <tr>-->
+<!--      <th>current_page </th>-->
+<!--      <th> per_page</th>-->
+<!--      <th> last_page </th>-->
+<!--      <th> total </th>-->
+<!--      </tr>-->
+<!--      </thead>-->
+<!--      <tbody>-->
+<!--      <tr-->
+<!--      v-for="pag in pagi"-->
+<!--      style="text-align: left"-->
+<!--    >-->
 
-      <td>{{ pag.current_page}}</td>
-        <td>{{ pag.per_page }}</td>
-        <td>{{ pag.last_page }}</td>
-        <td>{{ pag.total }}</td>
-    </tr>
-      </tbody>
-    </table>
+<!--      <td>{{ pag.current_page}}</td>-->
+<!--        <td>{{ pag.per_page }}</td>-->
+<!--        <td>{{ pag.last_page }}</td>-->
+<!--        <td>{{ pag.total }}</td>-->
+<!--    </tr>-->
+<!--      </tbody>-->
+<!--    </table>-->
   </div>
 </template>
 
@@ -406,9 +410,14 @@ export default {
       sort_order:'',
       active:true,
       count:0,
-      pagi:[],
-      current_page:'',
 
+      pagi:[],
+      page:2,
+      pageInfo:null,
+      totalPages: 4,
+      pageSize: 3,
+
+      pageSizes: [3, 6, 9],
 
 
       floor_name_edit:'',
@@ -438,13 +447,19 @@ export default {
   // eslint-disable-next-line vue/component-api-style
   methods:{
 
-    getAllPaginate(){
+    async getAllPaginate(page = 1){
+      console.log(this.page)
       axios
-        .get(`api/floorPaginate/2`)
-        .then(response => (this.pagi = response,
-
-        console.log(this.pagi)
-        ))
+        .get(`api/floorPaginate/${page}`)
+        .then(response => {
+          if (response.status == 200){
+            (this.pagi = response.data.data,
+            this.pageInfo = response.data
+            )
+            console.log(this.pagi)
+            console.log(this.pageInfo)
+          }
+        })
 
     },
 
@@ -453,9 +468,7 @@ export default {
         .get('api/floor')
         .then(res => {
           this.Floors = res.data
-          console.log(this.Floors)
-          this.count = this.Floors.length,
-          console.log(this.count)
+          this.count = this.Floors.length
 
         })
     },
